@@ -1,0 +1,66 @@
+version: "3"
+services:
+  master:
+    image: "tsoft/jmeter-master"
+    hostname: "jmeter-master"
+    stdin_open: true
+    tty: true
+    volumes:
+            - jmeter-results:/jmeter/apache-jmeter/bin/results:z
+            - jmeter-tests:/jmeter/apache-jmeter/bin/tests:z
+    networks:
+      - "tsoft"
+  slave:
+    image: "tsoft/jmeter-slave"
+    depends_on:
+      - "master"
+    stdin_open: true
+    tty: true
+    volumes:
+            - jmeter-data:/jmeter/apache-jmeter/bin/data:z
+    networks:
+      - "tsoft"
+  redis:
+    image: "redis"
+    hostname: "redis"
+    ports:
+      - "6379:6379"
+    networks:
+      - "tsoft"
+  grafana:
+    image: "grafana/grafana"
+    hostname: "grafana"
+    volumes:
+      - jmeter-grafana:/var/lib/grafana:z
+    ports:
+      - "3000:3000"
+    networks:
+      - "tsoft"
+  influxdb:
+    image: "influxdb"
+    hostname: "influxdb"
+    environment:
+      - "INFLUXDB_GRAPHITE_ENABLED=true"
+      - "INFLUXDB_DB=jmeter"
+    volumes:
+            - jmeter-influxdb:/var/lib/influxdb:z
+    networks:
+      - "tsoft"
+
+networks:
+  tsoft:
+    driver: "bridge"
+    external:
+      name: tsoft
+
+volumes:
+  jmeter-results:
+    external: true
+  jmeter-tests:
+    external: true
+  jmeter-data:
+    external: true
+  jmeter-influxdb:
+    external: true
+  jmeter-grafana:
+    external: true
