@@ -1,9 +1,9 @@
 ---
 # Jmter
-version: "3.2"
+version: '3.2'
 services:
   master:
-    image: "tsoft/jmeter-master"
+    image: "joabgonzalez/jmtm:hites"
     hostname: "jmeter-master"
     stdin_open: true
     tty: true
@@ -14,11 +14,17 @@ services:
       - "tsoft"
     deploy:
       placement:
-        constraints:
-          - node.role == manager
-    
+        constraints: [node.role == worker]
+      resources:
+        limits:
+          cpus: '2'
+          memory: 5120M
+        reservations:
+          cpus: '2'
+          memory: 5120M
+        
   slave:
-    image: "tsoft/jmeter-slave"
+    image: "joabgonzalez/jmts:hites"
     depends_on:
       - "master"
     stdin_open: true
@@ -27,6 +33,17 @@ services:
       - jmeter-data:/jmeter/apache-jmeter/bin/data:z
     networks:
       - "tsoft"
+    deploy:
+      placement:
+        constraints: [node.role == worker]
+      resources:
+        limits:
+          cpus: '2'
+          memory: 5120M
+        reservations:
+          cpus: '2'
+          memory: 5120M
+      
   redis:
     image: "redis"
     hostname: "redis"
@@ -38,6 +55,7 @@ services:
       placement:
         constraints:
           - node.role == manager
+          
   grafana:
     image: "grafana/grafana"
     hostname: "grafana"
@@ -69,11 +87,23 @@ services:
       placement:
         constraints:
           - node.role == manager
+  
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+      - "8085:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - tsoft          
+        
 networks:
   tsoft:
-    driver: "bridge"
-    external:
-      name: tsoft
+    driver: overlay
+    attachable: true
 
 volumes:
   jmeter-results:
