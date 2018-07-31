@@ -13,7 +13,8 @@ services:
       - "performance"
     deploy:
       placement:
-        constraints: [node.role == worker]
+        constraints:
+          - "node.role == worker"
       resources:
         limits:
           cpus: '2'
@@ -33,14 +34,15 @@ services:
       - "performance"
     deploy:
       placement:
-        constraints: [node.role == worker]
+        constraints:
+          - "node.role == worker"
       resources:
         limits:
           cpus: '1'
-          memory: 1024M
+          memory: 5120M
         reservations:
           cpus: '1'
-          memory: 1024M
+          memory: 5120M
   redis:
     image: "redis"
     hostname: "redis"
@@ -62,7 +64,7 @@ services:
       - "INFLUXDB_USER=performance"
       - "INFLUXDB_USER_PASSWORD=performance123"
     volumes:
-      - "$PWD/volumes/influxdb:/var/lib/influxdb"
+      - "jmeter-influxdb:/var/lib/influxdb"
     networks:
       - "performance"
     deploy:
@@ -72,33 +74,19 @@ services:
   grafana:
     image: "grafana/grafana"
     ports:
-      - "3000:3000"
+      - "80:3000"
     volumes:
-      - "$PWD/volumes/grafana:/var/lib/grafana"
+      - "jmeter-grafana:/var/lib/grafana"
     networks:
       - "performance"
     deploy:
       placement:
         constraints:
           - "node.role == manager"
-  visualizer:
-    image: dockersamples/visualizer:stable
-    ports:
-      - "8085:8080"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    deploy:
-      placement:
-        constraints:
-          - "node.role == manager"
-    networks:
-      - "performance"          
-        
 networks:
   performance:
     driver: overlay
     attachable: true
-
 volumes:
   jmeter-results:
     external: true
